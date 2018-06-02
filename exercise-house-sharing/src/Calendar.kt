@@ -7,6 +7,6 @@ package src
 
 // the trusted party key gets added to the calendar on the day of the check
 // the trusted party has to sign of on the change
-data class Calendar(val schedule: List<String>, val requests: List<List<ReservationRequest>>)
+data class Calendar(val schedule: List<String>, val requests: List<ReservationRequest>)
 {
 }

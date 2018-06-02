@@ -1,27 +1,26 @@
 package src
 
 
+val CREDIT_PER_DAY = 100
+val CREDIT_PER_FORK = 2
+val CREDIT_PER_PAN = 10
+val CREDIT_PER_DAY_ELEC = 5
+
 data class SmartContractData(
         val parties: Parties,
-        val signatures: Signatures,
+        val trustedParty: TrustedParty,
         val calendar: Calendar,
         val inventory: Inventory,
         val billing: Billing,
-        val trustedParty: TrustedParty,
+        val legalDocuments: LegalDocuments,
+        val signatures: Signatures,
         val trustedPartySignature: TrustedPartySignature)
 
 
 // only address the case where the status of the contract has been changed,
 // not when it is initially is created
-// we still need to check all the signatures because every new version needs to be
-// signed again
 fun SmartContract(oldData: SmartContractData, newData: SmartContractData)
 {
-    // check signatures
-    // 1. signatures belong to the contract parties
-    // 2.
-    // 2. all contract parties signed
-    //
-    require(newData.signatures.checkNumberOfSignatures(5)) {"dfjkdfjksjfd"}
-    require(newData.parties.checkAllPartiesSigned(oldData.signatures)) {"asdasdasdda"}
+    //require(newData.signatures.checkNumberOfSignatures(5)) {"Expected 5 signatures in updated state."}
+    //require(newData.signatures.checkNumberOfUniqueSignatures(5))
 }
