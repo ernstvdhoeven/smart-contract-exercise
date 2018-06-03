@@ -17,8 +17,13 @@ data class Signatures(val signatures: List<String>)
         return signatures == otherSignatures.signatures
     }
 
-    fun checkSignaturesAreFromParties(otherSignatures: Signatures) : Boolean
+    fun checkAllPartiesHaveSigned(parties: Parties) : Boolean
     {
-        return true //return signatures.minus(otherSignatures.signatures)
+        return signatures.containsAll(parties.publicKeys.map { x -> 's' + x })
+    }
+
+    fun checkIfPartiesHaveSigned(parties: List<String>) : Boolean
+    {
+        return signatures.containsAll(parties.map { x -> 's' + x })
     }
 }

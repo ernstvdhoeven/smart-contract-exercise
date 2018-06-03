@@ -36,7 +36,7 @@ class SimpleTest
     fun `changing the contract parties requires exactly one signature per contract party`()
     {
         SmartContract(scd!!, scd!!.copy(parties = Parties(listOf("1", "2", "3", "5")),
-                signatures = Signatures(listOf("s1", "s2", "s3", "s4", "s5"))))
+                signatures = Signatures(listOf("s1", "s2", "s3", "s4", "s5", "s3"))))
     }
 
     @Test(expected = IllegalArgumentException::class)
@@ -81,12 +81,6 @@ class SimpleTest
     }
 
     @Test(expected = IllegalArgumentException::class)
-    fun `you can not get assigned more than your share of the days`()
-    {
-        SmartContract(scd!!, scd!!.copy(calendar = Calendar(schedule = List(75, {i -> "1"}), requests = listOf())))
-    }
-
-    @Test(expected = IllegalArgumentException::class)
     fun `you should have enough credits to pay for the days you reserve`()
     {
         val start = Date.from(Instant.now().plusSeconds(3592000))
@@ -94,6 +88,12 @@ class SimpleTest
         SmartContract(scd!!, scd!!.copy(calendar = Calendar(schedule = listOf(),
                 requests = listOf(ReservationRequest(start, end, "3"))),
                 signatures = Signatures(listOf("s3"))))
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `you can not get assigned more than your share of the days`()
+    {
+        SmartContract(scd!!, scd!!.copy(calendar = Calendar(schedule = listOf(" ") + List(75, {i -> "1"}), requests = listOf())))
     }
 
     @Test(expected = IllegalArgumentException::class)
@@ -105,25 +105,27 @@ class SimpleTest
     @Test(expected = IllegalArgumentException::class)
     fun `when multiple parties request the same day assign at random based on previous state hash`()
     {
-        val start = Date.from(Instant.now().plusSeconds(1592000))
-        val end = Date.from(Instant.now().plusSeconds(1592000 + 604800))
+        val start = Date.from(Instant.now().plusSeconds(1209600))
+        val end = Date.from(Instant.now().plusSeconds(1209600 + 604800))
         val input = scd!!.copy(calendar = Calendar(schedule = listOf(),
                 requests = listOf(ReservationRequest(start, end, "4"), ReservationRequest(start, end, "1"))),
                 signatures = Signatures(listOf("s1", "s4")))
-        SmartContract(input, input)
+        SmartContract(input, input.copy(calendar = input.calendar.copy(schedule = listOf(" ") + List(7, {x -> "s1"}))))
     }
 
     @Test(expected = IllegalArgumentException::class)
     fun `reductions in inventory should be compensated for by a deduction in participant credit`()
     {
-        SmartContract(scd!!, scd!!.copy(inventory = Inventory(10, 2)))
+        SmartContract(scd!!, scd!!.copy(inventory = Inventory(10, 2),
+                trustedPartySignature = TrustedPartySignature("stp"),
+                calendar = Calendar(schedule = listOf("2", "1", "1"), requests = emptyList())))
     }
 
     @Test(expected = IllegalArgumentException::class)
     fun `you should have enough credits after a reservation to pay for missing inventory`()
     {
         val start = Date.from(Instant.now().plusSeconds(3592000))
-        val end = Date.from(Instant.now().plusSeconds(3592000 + 345600))
+        val end = Date.from(Instant.now().plusSeconds(3592000 + 432000))
         SmartContract(scd!!, scd!!.copy(calendar = Calendar(schedule = listOf(),
                 requests = listOf(ReservationRequest(start, end, "3"))),
                 signatures = Signatures(listOf("s3"))))
@@ -142,11 +144,19 @@ class SimpleTest
     }
 
     @Test(expected = IllegalArgumentException::class)
+    fun `electricity bills have to be paid`()
+    {
+        SmartContract(scd!!, scd!!.copy(calendar = Calendar(schedule = listOf(), requests = listOf()),
+                billing = scd!!.billing.copy(electricityBills = listOf(ElectricityBill(1, 30))),
+                trustedPartySignature = TrustedPartySignature("stp")))
+    }
+
+    @Test(expected = IllegalArgumentException::class)
     fun `participants that reserved the house for days pay more of the electricity bill for that period`()
     {
         SmartContract(scd!!, scd!!.copy(calendar = Calendar(schedule = listOf("4", "4", "4", "4", "4"), requests = listOf()),
                 billing = Billing(balance = listOf(970, 1470, 470, 2210, 1970), electricityBills = listOf(ElectricityBill(1, 30))),
-                trustedPartySignature = TrustedPartySignature("tps")))
+                trustedPartySignature = TrustedPartySignature("stp")))
     }
 
     @Test(expected = IllegalArgumentException::class)
@@ -154,41 +164,43 @@ class SimpleTest
     {
         SmartContract(scd!!, scd!!.copy(calendar = Calendar(schedule = listOf(), requests = listOf()),
                 billing = Billing(balance = listOf(970, 1470, 470, 2200, 1980), electricityBills = listOf(ElectricityBill(1, 30))),
-                trustedPartySignature = TrustedPartySignature("tps")))
+                trustedPartySignature = TrustedPartySignature("stp")))
     }
 
     @Test(expected = IllegalArgumentException::class)
     fun `participants should get negative credit if they do not have enough to pay`()
     {
         SmartContract(scd!!, scd!!.copy(calendar = Calendar(schedule = List(12, {i -> "1"}), requests = listOf()),
-                billing = Billing(listOf(0, 1450, 450, 2190, 1950), emptyList())))
+                billing = Billing(listOf(0, 1450, 450, 2190, 1750), emptyList()),
+                trustedPartySignature = TrustedPartySignature("stp")))
     }
 
     @Test(expected = IllegalArgumentException::class)
     fun `all other participants should temporarily cover for missing credit from other participants`()
     {
         SmartContract(scd!!, scd!!.copy(calendar = Calendar(schedule = List(12, {i -> "1"}), requests = listOf()),
-                billing = Billing(listOf(0, 1500, 500, 2240, 2000), emptyList())))
+                billing = Billing(listOf(-200, 1500, 500, 2240, 2000), emptyList()),
+                trustedPartySignature = TrustedPartySignature("stp")))
     }
 
     @Test(expected = IllegalArgumentException::class)
     fun `the identity of the trusted party can only change if all the participants agree`()
     {
         SmartContract(scd!!, scd!!.copy(trustedParty = TrustedParty("tp2"),
-                signatures = Signatures(listOf("s1", "s2", "s3", "s4", "s5"))))
+                signatures = Signatures(listOf("s1", "s2", "s3", "s4"))))
     }
 
     @Test(expected = IllegalArgumentException::class)
     fun `adding a legal document requires a signature from all the participants`()
     {
-        SmartContract(scd!!, scd!!.copy(legalDocuments = LegalDocuments(listOf("h2")),
+        SmartContract(scd!!, scd!!.copy(legalDocuments = LegalDocuments(listOf("123123")),
                 signatures = Signatures(listOf("s1", "s2", "s4", "s5"))))
     }
 
     @Test(expected = IllegalArgumentException::class)
     fun `the hash of the legal document should be properly formatted`()
     {
-        SmartContract(scd!!, scd!!.copy(legalDocuments = LegalDocuments(listOf("22123")),
+        SmartContract(scd!!, scd!!.copy(legalDocuments = LegalDocuments(listOf("h2")),
                 signatures = Signatures(listOf("s1", "s2", "s3", "s4", "s5"))))
     }
 }

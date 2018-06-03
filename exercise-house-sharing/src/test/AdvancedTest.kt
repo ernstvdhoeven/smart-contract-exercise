@@ -11,7 +11,7 @@ class AdvancedTest
     @Before
     fun setup()
     {
-        SmartContractData(
+        scd = SmartContractData(
                 Parties(listOf("1", "2", "3", "4", "5")),
                 TrustedParty("pktp"),
                 Calendar(emptyList(), emptyList()),
@@ -26,7 +26,7 @@ class AdvancedTest
     fun `same public key found multiple times in participant list`()
     {
         SmartContract(scd!!, scd!!.copy(Parties(listOf("1", "2", "3", "4", "5", "5=")),
-                signatures = Signatures(listOf("s1", "s2", "s3", "s4", "s5"))))
+                signatures = Signatures(listOf("s1", "s2", "s3", "s4", "s5", "s5="))))
     }
 
     @Test(expected = IllegalArgumentException::class)
@@ -34,7 +34,8 @@ class AdvancedTest
     {
         SmartContract(scd!!, scd!!.copy(inventory = Inventory(20, 10),
                 billing = Billing(balance = listOf(1090, 1500, 500, 2240, 2000), electricityBills = emptyList()),
-                signatures = Signatures(listOf("s1"))))
+                signatures = Signatures(listOf("s1")),
+                calendar = Calendar(schedule = listOf("2", "1", "1"), requests = emptyList())))
     }
 
     @Test(expected = IllegalArgumentException::class)
