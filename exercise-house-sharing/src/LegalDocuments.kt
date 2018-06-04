@@ -17,4 +17,16 @@ data class LegalDocuments(val documentHashes: List<String>)
     {
         return documentHashes.mapNotNull { x -> x.toIntOrNull() }.size == documentHashes.size
     }
+
+    /**
+     * Returns true if a document hash matches one of the signatures.
+     */
+    fun checkIfDocumentHashMatchesSignature(signatures: Signatures) : Boolean
+    {
+        for (signature in signatures.signatures)
+            if (documentHashes.contains(signature))
+                return true
+
+        return false
+    }
 }

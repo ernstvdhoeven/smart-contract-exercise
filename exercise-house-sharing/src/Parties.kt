@@ -58,6 +58,14 @@ data class Parties(val publicKeys: List<String>)
     }
 
     /**
+     * Returns true if the identity of the trusted party is in the list of participants.
+     */
+    fun checkIfTrustedPartyIsParticipant(trustedParty: TrustedParty) : Boolean
+    {
+        return publicKeys.contains(trustedParty.publicKey)
+    }
+
+    /**
      * Returns true if all the identities/public keys are valid.
      */
     fun allIdentitiesAreValid() : Boolean

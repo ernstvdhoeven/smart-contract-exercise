@@ -10,4 +10,12 @@ data class TrustedParty(val publicKey: String)
     {
         return oldTrustedParty.publicKey != publicKey
     }
+
+    /**
+     * Returns true if the trusted party has the same identity as one of the participants.
+     */
+    fun checkIfTrustedPartyIsParticipant(parties: Parties) : Boolean
+    {
+        return parties.publicKeys.contains(publicKey)
+    }
 }
