@@ -12,11 +12,17 @@ import java.util.*
 // the trusted party has to sign of on the change
 data class Calendar(val schedule: List<String>, val requests: List<ReservationRequest>)
 {
+    /**
+     * Returns true if the list of reservation requests has changed.
+     */
     fun reservationHasBeenAdded(oldCalender: Calendar) : Boolean
     {
         return oldCalender.requests != requests
     }
 
+    /**
+     * Returns true if all the reservation requests have been added before their respective deadlines.
+     */
     fun checkReservationsAreBeforeDeadline() : Boolean
     {
         val deadline = Instant.now().plusSeconds(2592000)
@@ -28,16 +34,25 @@ data class Calendar(val schedule: List<String>, val requests: List<ReservationRe
         return true
     }
 
+    /**
+     * Returns a list of parties that currently have an outstanding reservation request.
+     */
     fun getPartiesWithReservations() : List<String>
     {
         return requests.map { r -> r.identity }
     }
 
+    /**
+     * Returns true if the actual schedule (assignment of parties to days of the year) has changed.
+     */
     fun scheduleHasChanged(oldCalender: Calendar) : Boolean
     {
         return oldCalender.schedule != schedule
     }
 
+    /**
+     * Returns true if no one party has more than his or her share of days of the year according to the schedule.
+     */
     fun checkScheduleEquality(parties: Parties) : Boolean
     {
         val allowedDaysPerParty = 365 / parties.getNumberOfParties()
@@ -49,11 +64,18 @@ data class Calendar(val schedule: List<String>, val requests: List<ReservationRe
         return true
     }
 
+    /**
+     * Returns a list of all the reservation requests.
+     */
     fun getAllReservations() : List<ReservationRequest>
     {
         return requests
     }
 
+    /**
+     * Returns true if there is enough time in the current schedule for an inspection to occur between
+     * two different parties visiting the house.
+     */
     fun checkScheduleHasTimeForInspection() : Boolean
     {
         var current = 0
@@ -74,6 +96,9 @@ data class Calendar(val schedule: List<String>, val requests: List<ReservationRe
         return true
     }
 
+    /**
+     * Returns true if the schedule has been based on the actual reservation requests instead of ignoring those.
+     */
     fun checkScheduleChangeBasedOnReservations() : Boolean
     {
         if (requests.isNotEmpty())
@@ -82,6 +107,10 @@ data class Calendar(val schedule: List<String>, val requests: List<ReservationRe
         return true
     }
 
+    /**
+     * Returns true if the correct party has been randomly selected if multiple parties wanted to reserve
+     * the house for the same period.
+     */
     fun checkScheduleChangeRandomReservation() : Boolean
     {
         if (requests.isNotEmpty())
@@ -90,6 +119,9 @@ data class Calendar(val schedule: List<String>, val requests: List<ReservationRe
         return true
     }
 
+    /**
+     * Returns the last party that has stayed in the house.
+     */
     fun getLastPartyInHouse() : String
     {
         return schedule.mapNotNull { x -> x.toIntOrNull() }.last().toString()

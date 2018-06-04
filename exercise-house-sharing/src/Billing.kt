@@ -6,6 +6,9 @@ import kotlin.math.ceil
 // money itself handled on for example ethereum, no need to prove how much money added to balance
 data class Billing(val balance: List<Int>, val electricityBills: List<ElectricityBill>)
 {
+    /**
+     * Returns true if everyone that currently has a reservation actually has the credit to pay for it.
+     */
     fun checkCanPayForReservations(requests: List<ReservationRequest>) : Boolean
     {
         for (group in requests.groupBy { it })
@@ -19,6 +22,10 @@ data class Billing(val balance: List<Int>, val electricityBills: List<Electricit
         return true
     }
 
+    /**
+     * Returns true if everyone that currently has a reservation actually has the credit to pay for it plus
+     * for any other potential related cost (e.g. having to pay for broken/missing inventory after your stay).
+     */
     fun checkCanPayForReservationsAndAdditionalCost(requests: List<ReservationRequest>, additionalCost: Int) : Boolean
     {
         for (group in requests.groupBy { it })
@@ -33,6 +40,9 @@ data class Billing(val balance: List<Int>, val electricityBills: List<Electricit
         return true
     }
 
+    /**
+     * Returns true if the last party in the house has had to pay for any missing inventory.
+     */
     fun checkPartyBilledForMissingInventory(oldBilling: Billing, costMissingInventory : Int, lastPartyInHouse: String) : Boolean
     {
         if (costMissingInventory != 0)
@@ -41,6 +51,10 @@ data class Billing(val balance: List<Int>, val electricityBills: List<Electricit
         return true
     }
 
+    /**
+     * Returns true only if the last party in the house has had to pay for any missing inventory after his stay,
+     * and not if the last party has received money for adding inventory.
+     */
     fun checkOnlyNegativeBillsForMissingInventory(oldBilling: Billing, costMissingInventory : Int, lastPartyInHouse: String) : Boolean
     {
         if (costMissingInventory > 0)
@@ -49,6 +63,9 @@ data class Billing(val balance: List<Int>, val electricityBills: List<Electricit
         return true
     }
 
+    /**
+     * Returns true if the balance has changed in the current state.
+     */
     fun balanceHasChanged(oldBilling: Billing) : Boolean
     {
         for (i in 0..3)
@@ -58,17 +75,27 @@ data class Billing(val balance: List<Int>, val electricityBills: List<Electricit
         return false
     }
 
+    /**
+     * Returns true if an electricity bill has been added in the current state.
+     */
     fun electricityBillsHasChanged(oldBilling: Billing) : Boolean
     {
         return oldBilling.electricityBills != electricityBills
     }
 
+    /**
+     * Returns true if all the electricity bills have been paid for.
+     */
     fun checkIfElectricityBillHasBeenPaid(oldBilling: Billing) : Boolean
     {
         val price = electricityBills.map { x -> x.endDay - x.startDay + 1 }.sum() * CREDIT_PER_DAY_ELEC
         return balance.sum() == oldBilling.balance.sum() - price
     }
 
+    /**
+     * Returns true if the parties that stayed in the house in a given period have had to pay more
+     * for the electricity bill than those that did not stay in the house in that period.
+     */
     fun checkIfPartyPaidElectricityForDaysInHouse(oldBilling: Billing, calendar: Calendar) : Boolean
     {
         if (calendar.schedule.isNotEmpty())
@@ -86,6 +113,9 @@ data class Billing(val balance: List<Int>, val electricityBills: List<Electricit
         return true
     }
 
+    /**
+     * Returns true if all the parties have had to pay the same amount for the days that nobody had scheduled the house.
+     */
     fun checkIfAllPartiesPaidTheSameForEmptyHouseDays(oldBilling: Billing, calendar: Calendar) : Boolean
     {
         if (calendar.schedule.isEmpty())
@@ -97,6 +127,9 @@ data class Billing(val balance: List<Int>, val electricityBills: List<Electricit
         return true
     }
 
+    /**
+     * Returns true if all parties that scheduled the house for a particular period of time paid for those days.
+     */
     fun checkIfPartyHasPaidForScheduledDays(oldBilling: Billing, calendar: Calendar) : Boolean
     {
         if (calendar.schedule.isNotEmpty())
@@ -116,6 +149,9 @@ data class Billing(val balance: List<Int>, val electricityBills: List<Electricit
         return true
     }
 
+    /**
+     * Returns true if the other parties compensated for negative credit of a participant that stayed in the house.
+     */
     fun checkIfAllPartiesCompensateForNegativeCredit(oldBilling: Billing, calendar: Calendar) : Boolean
     {
         if (calendar.schedule.isNotEmpty())
